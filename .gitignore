@@ -13,6 +13,7 @@
 *.log
 *.tgz
 build
+build-electron
 dist
 firebase
 logs

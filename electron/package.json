@@ -1,0 +1,73 @@
+{
+  "name": "excalidraw-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/main/index.js",
+  "description": "Excalidraw Desktop - Offline whiteboard app",
+  "author": "Excalidraw",
+  "license": "MIT",
+  "scripts": {
+    "build:main": "node build.mjs",
+    "build:renderer": "yarn --cwd ../excalidraw-app build:electron",
+    "build": "yarn build:renderer && yarn build:main",
+    "start": "cd .. && npx electron electron/",
+    "dist": "yarn build && cd .. && npx electron-builder --win --project electron"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "28.3.3",
+    "electron-builder": "^24.9.0",
+    "electron-store": "^8.1.0",
+    "esbuild": "^0.19.0",
+    "typescript": "5.9.3"
+  },
+  "build": {
+    "appId": "com.excalidraw.desktop",
+    "productName": "Excalidraw",
+    "copyright": "Copyright © 2025 Excalidraw",
+    "electronVersion": "28.3.3",
+    "directories": {
+      "buildResources": "resources",
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "nodeGypRebuild": false,
+    "extraResources": [
+      {
+        "from": "../excalidraw-app/build-electron",
+        "to": "renderer",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "resources/icon.ico",
+      "fileAssociations": [
+        {
+          "ext": "excalidraw",
+          "name": "Excalidraw Drawing",
+          "description": "Excalidraw Drawing File",
+          "icon": "resources/icon.ico",
+          "role": "Editor"
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Excalidraw",
+      "license": "../LICENSE",
+      "perMachine": false
+    }
+  }
+}

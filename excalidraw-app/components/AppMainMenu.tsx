@@ -12,8 +12,11 @@ import type { Theme } from "@excalidraw/element/types";
 
 import { LanguageList } from "../app-language/LanguageList";
 import { isExcalidrawPlusSignedUser } from "../app_constants";
+import { isElectron } from "../electron/ElectronProvider";
 
 import { saveDebugState } from "./DebugCanvas";
+
+const _isElectron = isElectron();
 
 export const AppMainMenu: React.FC<{
   onCollabDialogOpen: () => any;
@@ -40,25 +43,29 @@ export const AppMainMenu: React.FC<{
       <MainMenu.DefaultItems.Help />
       <MainMenu.DefaultItems.ClearCanvas />
       <MainMenu.Separator />
-      <MainMenu.ItemLink
-        icon={ExcalLogo}
-        href={`${
-          import.meta.env.VITE_APP_PLUS_LP
-        }/plus?utm_source=excalidraw&utm_medium=app&utm_content=hamburger`}
-        className=""
-      >
-        Excalidraw+
-      </MainMenu.ItemLink>
-      <MainMenu.DefaultItems.Socials />
-      <MainMenu.ItemLink
-        icon={loginIcon}
-        href={`${import.meta.env.VITE_APP_PLUS_APP}${
-          isExcalidrawPlusSignedUser ? "" : "/sign-up"
-        }?utm_source=signin&utm_medium=app&utm_content=hamburger`}
-        className="highlighted"
-      >
-        {isExcalidrawPlusSignedUser ? "Sign in" : "Sign up"}
-      </MainMenu.ItemLink>
+      {!_isElectron && (
+        <MainMenu.ItemLink
+          icon={ExcalLogo}
+          href={`${
+            import.meta.env.VITE_APP_PLUS_LP
+          }/plus?utm_source=excalidraw&utm_medium=app&utm_content=hamburger`}
+          className=""
+        >
+          Excalidraw+
+        </MainMenu.ItemLink>
+      )}
+      {!_isElectron && <MainMenu.DefaultItems.Socials />}
+      {!_isElectron && (
+        <MainMenu.ItemLink
+          icon={loginIcon}
+          href={`${import.meta.env.VITE_APP_PLUS_APP}${
+            isExcalidrawPlusSignedUser ? "" : "/sign-up"
+          }?utm_source=signin&utm_medium=app&utm_content=hamburger`}
+          className="highlighted"
+        >
+          {isExcalidrawPlusSignedUser ? "Sign in" : "Sign up"}
+        </MainMenu.ItemLink>
+      )}
       {isDevEnv() && (
         <MainMenu.Item
           icon={eyeIcon}
