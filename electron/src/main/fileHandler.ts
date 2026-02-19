@@ -181,6 +181,207 @@ export function setupFileHandlers(): void {
   );
 }
 
+export function setupDirectoryHandlers(): void {
+  const META_FILE = ".excalidraw-meta.json";
+
+  function getRootFolder(): string | null {
+    return store.get("rootFolder", null) as string | null;
+  }
+
+  function isPathWithinRoot(targetPath: string): boolean {
+    const root = getRootFolder();
+    if (!root) {
+      return false;
+    }
+    const resolved = path.resolve(targetPath);
+    const resolvedRoot = path.resolve(root);
+    return resolved.startsWith(resolvedRoot);
+  }
+
+  // Config handlers
+  ipcMain.handle("config:getRootFolder", () => {
+    return getRootFolder();
+  });
+
+  ipcMain.handle("config:setRootFolder", (_event, folderPath: string) => {
+    store.set("rootFolder", folderPath);
+  });
+
+  ipcMain.handle("config:getScratchCanvas", () => {
+    return store.get("scratchCanvas", null) as string | null;
+  });
+
+  ipcMain.handle("config:setScratchCanvas", (_event, content: string) => {
+    store.set("scratchCanvas", content);
+  });
+
+  // Directory handlers
+  ipcMain.handle("dir:selectRoot", async () => {
+    const result = await dialog.showOpenDialog({
+      title: "Select Root Folder",
+      properties: ["openDirectory", "createDirectory"],
+    });
+    if (result.canceled || result.filePaths.length === 0) {
+      return null;
+    }
+    return result.filePaths[0];
+  });
+
+  ipcMain.handle("dir:list", async (_event, dirPath: string) => {
+    if (!isPathWithinRoot(dirPath)) {
+      throw new Error("Path outside root folder");
+    }
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+    const results = await Promise.all(
+      entries
+        .filter((entry) => {
+          // Hide hidden files and meta files
+          if (entry.name.startsWith(".")) {
+            return false;
+          }
+          // Show directories and .excalidraw files
+          return (
+            entry.isDirectory() || entry.name.endsWith(".excalidraw")
+          );
+        })
+        .map(async (entry) => {
+          const fullPath = path.join(dirPath, entry.name);
+          const stat = await fs.stat(fullPath);
+          return {
+            name: entry.name,
+            path: fullPath,
+            isDirectory: entry.isDirectory(),
+            size: stat.size,
+            mtime: stat.mtimeMs,
+          };
+        }),
+    );
+    return results;
+  });
+
+  ipcMain.handle(
+    "dir:create",
+    async (_event, parentPath: string, name: string) => {
+      if (!isPathWithinRoot(parentPath)) {
+        throw new Error("Path outside root folder");
+      }
+      const dirPath = path.join(parentPath, name);
+      await fs.mkdir(dirPath, { recursive: true });
+      return { path: dirPath };
+    },
+  );
+
+  ipcMain.handle(
+    "dir:rename",
+    async (_event, oldPath: string, newName: string) => {
+      if (!isPathWithinRoot(oldPath)) {
+        throw new Error("Path outside root folder");
+      }
+      const newPath = path.join(path.dirname(oldPath), newName);
+      await fs.rename(oldPath, newPath);
+      return { path: newPath };
+    },
+  );
+
+  ipcMain.handle("dir:delete", async (_event, dirPath: string) => {
+    if (!isPathWithinRoot(dirPath)) {
+      throw new Error("Path outside root folder");
+    }
+    const mainWindow = getMainWindow();
+    if (mainWindow) {
+      const result = await dialog.showMessageBox(mainWindow, {
+        type: "warning",
+        buttons: ["Delete", "Cancel"],
+        defaultId: 1,
+        title: "Confirm Delete",
+        message: `Are you sure you want to delete "${path.basename(dirPath)}"?`,
+        detail: "This action cannot be undone.",
+      });
+      if (result.response !== 0) {
+        return;
+      }
+    }
+    await fs.rm(dirPath, { recursive: true, force: true });
+  });
+
+  ipcMain.handle("dir:readMeta", async (_event, dirPath: string) => {
+    try {
+      const metaPath = path.join(dirPath, META_FILE);
+      const content = await fs.readFile(metaPath, "utf-8");
+      return JSON.parse(content);
+    } catch {
+      return null;
+    }
+  });
+
+  ipcMain.handle(
+    "dir:writeMeta",
+    async (_event, dirPath: string, meta: object) => {
+      const metaPath = path.join(dirPath, META_FILE);
+      await fs.writeFile(metaPath, JSON.stringify(meta, null, 2), "utf-8");
+    },
+  );
+
+  // Additional file handlers
+  ipcMain.handle("file:readContent", async (_event, filePath: string) => {
+    if (!isPathWithinRoot(filePath)) {
+      throw new Error("Path outside root folder");
+    }
+    return fs.readFile(filePath, "utf-8");
+  });
+
+  ipcMain.handle(
+    "file:writeContent",
+    async (_event, filePath: string, content: string) => {
+      if (!isPathWithinRoot(filePath)) {
+        throw new Error("Path outside root folder");
+      }
+      await fs.writeFile(filePath, content, "utf-8");
+    },
+  );
+
+  ipcMain.handle("file:delete", async (_event, filePath: string) => {
+    if (!isPathWithinRoot(filePath)) {
+      throw new Error("Path outside root folder");
+    }
+    const mainWindow = getMainWindow();
+    if (mainWindow) {
+      const result = await dialog.showMessageBox(mainWindow, {
+        type: "warning",
+        buttons: ["Delete", "Cancel"],
+        defaultId: 1,
+        title: "Confirm Delete",
+        message: `Delete "${path.basename(filePath)}"?`,
+      });
+      if (result.response !== 0) {
+        return;
+      }
+    }
+    await fs.unlink(filePath);
+  });
+
+  ipcMain.handle(
+    "file:rename",
+    async (_event, oldPath: string, newName: string) => {
+      if (!isPathWithinRoot(oldPath)) {
+        throw new Error("Path outside root folder");
+      }
+      const newPath = path.join(path.dirname(oldPath), newName);
+      await fs.rename(oldPath, newPath);
+      if (currentFilePath === oldPath) {
+        currentFilePath = newPath;
+        updateWindowTitle();
+      }
+      return { path: newPath };
+    },
+  );
+
+  ipcMain.handle("file:stat", async (_event, filePath: string) => {
+    const stat = await fs.stat(filePath);
+    return { size: stat.size, mtime: stat.mtimeMs };
+  });
+}
+
 export async function handleFileOpen(filePath: string): Promise<void> {
   const fileData = await loadFile(filePath);
   const mainWindow = getMainWindow();

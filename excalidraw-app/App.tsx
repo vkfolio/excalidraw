@@ -32,7 +32,7 @@ import {
   isDevEnv,
 } from "@excalidraw/common";
 import polyfill from "@excalidraw/excalidraw/polyfill";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { loadFromBlob } from "@excalidraw/excalidraw/data/blob";
 import { useCallbackRefState } from "@excalidraw/excalidraw/hooks/useCallbackRefState";
 import { t } from "@excalidraw/excalidraw/i18n";
@@ -83,8 +83,10 @@ import {
   Provider,
   useAtom,
   useAtomValue,
+  useSetAtom,
   useAtomWithInitialValue,
   appJotaiStore,
+  electronViewAtom,
 } from "./app-jotai";
 import {
   FIREBASE_STORAGE_PREFIXES,
@@ -147,6 +149,17 @@ import { AppSidebar } from "./components/AppSidebar";
 import { isElectron } from "./electron/ElectronProvider";
 import { useElectronFileOps } from "./electron/useElectronFileOps";
 import { useElectronMenu } from "./electron/useElectronMenu";
+import { useScratchCanvas } from "./electron/useScratchCanvas";
+
+const SaveToFolderDialog = React.lazy(
+  () => import("./electron/components/SaveToFolderDialog"),
+);
+const PdfExportDialog = React.lazy(
+  () => import("./electron/components/PdfExportDialog"),
+);
+const PresentationMode = React.lazy(
+  () => import("./electron/components/PresentationMode"),
+);
 
 import type { CollabAPI } from "./collab/Collab";
 
@@ -407,12 +420,28 @@ const ExcalidrawWrapper = () => {
 
   // Electron integration
   const electronFileOps = useElectronFileOps(excalidrawAPI);
-  useElectronMenu(excalidrawAPI, electronFileOps);
+  const [showPdfExport, setShowPdfExport] = useState(false);
+  const [showPresentation, setShowPresentation] = useState(false);
+  useElectronMenu(excalidrawAPI, electronFileOps, {
+    onExportPdf: () => setShowPdfExport(true),
+    onPresent: () => setShowPresentation(true),
+  });
+  useScratchCanvas(excalidrawAPI);
+
+  // Load file when entering editor from folder browser
+  const currentFilePath = electronFileOps.currentFilePath;
+  const loadedFileRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (isElectron() && excalidrawAPI && currentFilePath && currentFilePath !== loadedFileRef.current) {
+      loadedFileRef.current = currentFilePath;
+      electronFileOps.loadFile(currentFilePath);
+    }
+  }, [currentFilePath, excalidrawAPI]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [, setShareDialogState] = useAtom(shareDialogStateAtom);
   const [collabAPI] = useAtom(collabAPIAtom);
   const [isCollaborating] = useAtomWithInitialValue(isCollaboratingAtom, () => {
-    return isCollaborationLink(window.location.href);
+    return isElectron() ? false : isCollaborationLink(window.location.href);
   });
   const collabError = useAtomValue(collabErrorIndicatorAtom);
 
@@ -894,8 +923,14 @@ const ExcalidrawWrapper = () => {
         handleKeyboardGlobally={true}
         autoFocus={true}
         theme={editorTheme}
+        validateEmbeddable={isElectron() ? true : undefined}
         renderTopRightUI={(isMobile) => {
           if (isMobile || !collabAPI || isCollabDisabled) {
+            return null;
+          }
+
+          // No top-right collab UI for electron
+          if (isElectron()) {
             return null;
           }
 
@@ -932,6 +967,8 @@ const ExcalidrawWrapper = () => {
           theme={appTheme}
           setTheme={(theme) => setAppTheme(theme)}
           refresh={() => forceRefresh((prev) => !prev)}
+          onPresent={() => setShowPresentation(true)}
+          onExportPdf={() => setShowPdfExport(true)}
         />
         <AppWelcomeScreen
           onCollabDialogOpen={onCollabDialogOpen}
@@ -940,7 +977,7 @@ const ExcalidrawWrapper = () => {
         <OverwriteConfirmDialog>
           <OverwriteConfirmDialog.Actions.ExportToImage />
           <OverwriteConfirmDialog.Actions.SaveToDisk />
-          {excalidrawAPI && (
+          {excalidrawAPI && !isElectron() && (
             <OverwriteConfirmDialog.Action
               title={t("overwriteConfirm.action.excalidrawPlus.title")}
               actionLabel={t("overwriteConfirm.action.excalidrawPlus.button")}
@@ -971,35 +1008,41 @@ const ExcalidrawWrapper = () => {
             {t("alerts.localStorageQuotaExceeded")}
           </div>
         )}
-        {latestShareableLink && (
+        {!isElectron() && latestShareableLink && (
           <ShareableLinkDialog
             link={latestShareableLink}
             onCloseRequest={() => setLatestShareableLink(null)}
             setErrorMessage={setErrorMessage}
           />
         )}
-        {excalidrawAPI && !isCollabDisabled && (
+        {!isElectron() && excalidrawAPI && !isCollabDisabled && (
           <Collab excalidrawAPI={excalidrawAPI} />
         )}
 
-        <ShareDialog
-          collabAPI={collabAPI}
-          onExportToBackend={async () => {
-            if (excalidrawAPI) {
-              try {
-                await onExportToBackend(
-                  excalidrawAPI.getSceneElements(),
-                  excalidrawAPI.getAppState(),
-                  excalidrawAPI.getFiles(),
-                );
-              } catch (error: any) {
-                setErrorMessage(error.message);
+        {!isElectron() && (
+          <ShareDialog
+            collabAPI={collabAPI}
+            onExportToBackend={async () => {
+              if (excalidrawAPI) {
+                try {
+                  await onExportToBackend(
+                    excalidrawAPI.getSceneElements(),
+                    excalidrawAPI.getAppState(),
+                    excalidrawAPI.getFiles(),
+                  );
+                } catch (error: any) {
+                  setErrorMessage(error.message);
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
+        )}
 
-        <AppSidebar />
+        <AppSidebar
+          excalidrawAPI={excalidrawAPI}
+          onPresent={() => setShowPresentation(true)}
+          onExportPdf={() => setShowPdfExport(true)}
+        />
 
         {errorMessage && (
           <ErrorDialog onClose={() => setErrorMessage("")}>
@@ -1009,7 +1052,7 @@ const ExcalidrawWrapper = () => {
 
         <CommandPalette
           customCommandPaletteItems={[
-            {
+            ...(!isElectron() ? [{
               label: t("labels.liveCollaboration"),
               category: DEFAULT_CATEGORIES.app,
               keywords: [
@@ -1145,6 +1188,8 @@ const ExcalidrawWrapper = () => {
                 );
               },
             },
+            ] : []),
+            ...(!isElectron() ? [
             ...(isExcalidrawPlusSignedUser
               ? [
                   {
@@ -1171,6 +1216,7 @@ const ExcalidrawWrapper = () => {
                 }
               },
             },
+            ] : []),
             {
               ...CommandPalette.defaultItems.toggleTheme,
               perform: () => {
@@ -1179,7 +1225,7 @@ const ExcalidrawWrapper = () => {
                 );
               },
             },
-            {
+            ...(!isElectron() ? [{
               label: t("labels.installPWA"),
               category: DEFAULT_CATEGORIES.app,
               predicate: () => !!pwaEvent,
@@ -1187,13 +1233,11 @@ const ExcalidrawWrapper = () => {
                 if (pwaEvent) {
                   pwaEvent.prompt();
                   pwaEvent.userChoice.then(() => {
-                    // event cannot be reused, but we'll hopefully
-                    // grab new one as the event should be fired again
                     pwaEvent = null;
                   });
                 }
               },
-            },
+            }] : []),
           ]}
         />
         {isVisualDebuggerEnabled() && excalidrawAPI && (
@@ -1204,7 +1248,86 @@ const ExcalidrawWrapper = () => {
           />
         )}
       </Excalidraw>
+      {isElectron() && (
+        <React.Suspense fallback={null}>
+          <SaveToFolderDialog
+            isOpen={electronFileOps.showSaveDialog}
+            onClose={() => electronFileOps.setShowSaveDialog(false)}
+            onSave={(filePath) => electronFileOps.handleSaveToPath(filePath)}
+            content={electronFileOps.serializeScene()}
+          />
+          {excalidrawAPI && (
+            <PdfExportDialog
+              isOpen={showPdfExport}
+              onClose={() => setShowPdfExport(false)}
+              excalidrawAPI={excalidrawAPI}
+            />
+          )}
+          {excalidrawAPI && showPresentation && (
+            <PresentationMode
+              excalidrawAPI={excalidrawAPI}
+              onExit={() => setShowPresentation(false)}
+            />
+          )}
+        </React.Suspense>
+      )}
     </div>
+  );
+};
+
+const SetupWizard = React.lazy(
+  () => import("./electron/components/SetupWizard"),
+);
+const FolderBrowser = React.lazy(
+  () => import("./electron/components/FolderBrowser"),
+);
+
+const ElectronViewRouter = () => {
+  const [view, setView] = useAtom(electronViewAtom);
+  const rootFolder = useRef<string | null>(null);
+
+  useEffect(() => {
+    const api = (window as any).electron;
+    if (api) {
+      api.config.getRootFolder().then((folder: string | null) => {
+        rootFolder.current = folder;
+        if (!folder) {
+          setView("setup");
+        } else if (view === "editor" || view === "presentation") {
+          // keep current view
+        } else {
+          setView("home");
+        }
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <React.Suspense fallback={
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        height: "100vh",
+        backgroundColor: "var(--ed-bg, #f5f5f5)",
+        fontFamily: "system-ui, sans-serif",
+        color: "var(--ed-text-secondary, #65656d)",
+      }}>Loading...</div>
+    }>
+      {(() => {
+        switch (view) {
+          case "setup":
+            return <SetupWizard />;
+          case "home":
+            return <FolderBrowser />;
+          case "editor":
+          case "presentation":
+          default:
+            return <ExcalidrawWrapper />;
+        }
+      })()}
+    </React.Suspense>
   );
 };
 
@@ -1215,10 +1338,12 @@ const ExcalidrawApp = () => {
     return <ExcalidrawPlusIframeExport />;
   }
 
+  const _isElectron = isElectron();
+
   return (
     <TopErrorBoundary>
       <Provider store={appJotaiStore}>
-        <ExcalidrawWrapper />
+        {_isElectron ? <ElectronViewRouter /> : <ExcalidrawWrapper />}
       </Provider>
     </TopErrorBoundary>
   );

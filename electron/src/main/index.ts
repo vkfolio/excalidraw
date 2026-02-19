@@ -2,7 +2,7 @@ import { app, BrowserWindow, protocol } from "electron";
 import * as path from "path";
 
 import { createWindow, getMainWindow } from "./window";
-import { setupFileHandlers, handleFileOpen } from "./fileHandler";
+import { setupFileHandlers, setupDirectoryHandlers, handleFileOpen } from "./fileHandler";
 import { createApplicationMenu } from "./menu";
 import { setupIPCHandlers } from "./ipc";
 
@@ -31,6 +31,7 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     setupIPCHandlers();
     setupFileHandlers();
+    setupDirectoryHandlers();
 
     const mainWindow = createWindow();
     createApplicationMenu(mainWindow);

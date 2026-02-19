@@ -31,6 +31,16 @@ const electronAPI = {
     setModified: (modified: boolean) => {
       ipcRenderer.send("file:modified", modified);
     },
+    readContent: (filePath: string) =>
+      ipcRenderer.invoke("file:readContent", filePath) as Promise<string>,
+    writeContent: (filePath: string, content: string) =>
+      ipcRenderer.invoke("file:writeContent", filePath, content) as Promise<void>,
+    delete: (filePath: string) =>
+      ipcRenderer.invoke("file:delete", filePath) as Promise<void>,
+    rename: (oldPath: string, newName: string) =>
+      ipcRenderer.invoke("file:rename", oldPath, newName) as Promise<{ path: string }>,
+    stat: (filePath: string) =>
+      ipcRenderer.invoke("file:stat", filePath) as Promise<{ size: number; mtime: number }>,
   },
 
   fs: {
@@ -63,6 +73,44 @@ const electronAPI = {
       } | null>,
   },
 
+  dir: {
+    selectRoot: () =>
+      ipcRenderer.invoke("dir:selectRoot") as Promise<string | null>,
+    list: (dirPath: string) =>
+      ipcRenderer.invoke("dir:list", dirPath) as Promise<Array<{
+        name: string;
+        path: string;
+        isDirectory: boolean;
+        size: number;
+        mtime: number;
+      }>>,
+    create: (parentPath: string, name: string) =>
+      ipcRenderer.invoke("dir:create", parentPath, name) as Promise<{ path: string }>,
+    rename: (oldPath: string, newName: string) =>
+      ipcRenderer.invoke("dir:rename", oldPath, newName) as Promise<{ path: string }>,
+    delete: (dirPath: string) =>
+      ipcRenderer.invoke("dir:delete", dirPath) as Promise<void>,
+    readMeta: (dirPath: string) =>
+      ipcRenderer.invoke("dir:readMeta", dirPath) as Promise<{
+        color?: string;
+        sortOrder?: string;
+        customOrder?: string[];
+      } | null>,
+    writeMeta: (dirPath: string, meta: object) =>
+      ipcRenderer.invoke("dir:writeMeta", dirPath, meta) as Promise<void>,
+  },
+
+  config: {
+    getRootFolder: () =>
+      ipcRenderer.invoke("config:getRootFolder") as Promise<string | null>,
+    setRootFolder: (folderPath: string) =>
+      ipcRenderer.invoke("config:setRootFolder", folderPath) as Promise<void>,
+    getScratchCanvas: () =>
+      ipcRenderer.invoke("config:getScratchCanvas") as Promise<string | null>,
+    setScratchCanvas: (content: string) =>
+      ipcRenderer.invoke("config:setScratchCanvas", content) as Promise<void>,
+  },
+
   menu: {
     onNew: (callback: () => void) => {
       ipcRenderer.on("menu:new", () => callback());
@@ -87,6 +135,15 @@ const electronAPI = {
     },
     onZoomReset: (callback: () => void) => {
       ipcRenderer.on("menu:zoomReset", () => callback());
+    },
+    onHome: (callback: () => void) => {
+      ipcRenderer.on("menu:home", () => callback());
+    },
+    onPresent: (callback: () => void) => {
+      ipcRenderer.on("menu:present", () => callback());
+    },
+    onExportPdf: (callback: () => void) => {
+      ipcRenderer.on("menu:exportPdf", () => callback());
     },
   },
 };

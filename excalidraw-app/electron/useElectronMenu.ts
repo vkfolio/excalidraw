@@ -2,6 +2,8 @@ import { useEffect } from "react";
 
 import { exportToBlob, exportToSvg } from "@excalidraw/excalidraw";
 
+import { useSetAtom } from "../app-jotai";
+import { electronViewAtom } from "../app-jotai";
 import { isElectron, getElectronAPI } from "./ElectronProvider";
 
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
@@ -15,8 +17,13 @@ export const useElectronMenu = (
     handleSaveAs: () => void;
     handleNew: () => void;
   },
+  callbacks?: {
+    onPresent?: () => void;
+    onExportPdf?: () => void;
+  },
 ) => {
   const electronAPI = getElectronAPI();
+  const setView = useSetAtom(electronViewAtom);
 
   useEffect(() => {
     if (!isElectron() || !electronAPI || !excalidrawAPI) {
@@ -88,5 +95,23 @@ export const useElectronMenu = (
         },
       });
     });
-  }, [electronAPI, excalidrawAPI, fileOps]);
+
+    electronAPI.menu.onHome(() => {
+      setView("home");
+    });
+
+    electronAPI.menu.onPresent(() => {
+      if (callbacks?.onPresent) {
+        callbacks.onPresent();
+      } else {
+        setView("presentation");
+      }
+    });
+
+    electronAPI.menu.onExportPdf(() => {
+      if (callbacks?.onExportPdf) {
+        callbacks.onExportPdf();
+      }
+    });
+  }, [electronAPI, excalidrawAPI, fileOps, setView, callbacks]);
 };

@@ -1,0 +1,102 @@
+@import "./electron-theme";
+
+.SetupWizard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
+  background-color: var(--ed-bg);
+  font-family: var(--ed-font);
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 3rem 3.5rem;
+    background-color: var(--ed-bg-card);
+    border: 1px solid var(--ed-border);
+    border-radius: var(--ed-radius-lg);
+    box-shadow: var(--ed-shadow-lg);
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+  }
+
+  &__logo {
+    width: 72px;
+    height: 72px;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  &__heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--ed-text);
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  &__description {
+    font-size: 0.9375rem;
+    color: var(--ed-text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  &__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    font-family: var(--ed-font);
+    color: #fff;
+    background-color: var(--ed-primary);
+    border: none;
+    border-radius: var(--ed-radius-md);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--ed-primary-hover);
+    }
+
+    &:active {
+      background-color: var(--ed-primary-active);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    svg {
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+  }
+
+  &__error {
+    font-size: 0.8125rem;
+    color: var(--ed-danger);
+    margin: 0;
+  }
+
+  &__selected-path {
+    font-size: 0.8125rem;
+    color: var(--ed-text-secondary);
+    background-color: var(--ed-bg);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--ed-radius-md);
+    word-break: break-all;
+    max-width: 100%;
+    margin: 0;
+  }
+}

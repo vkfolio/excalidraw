@@ -748,13 +748,43 @@ export const renderElement = (
   switch (element.type) {
     case "magicframe":
     case "frame": {
+      // Fill frame background if a non-transparent color is set
+      if (
+        element.backgroundColor &&
+        element.backgroundColor !== "transparent"
+      ) {
+        context.save();
+        context.translate(
+          element.x + appState.scrollX,
+          element.y + appState.scrollY,
+        );
+        context.fillStyle = element.backgroundColor;
+
+        if (FRAME_STYLE.radius && context.roundRect) {
+          context.beginPath();
+          context.roundRect(
+            0,
+            0,
+            element.width,
+            element.height,
+            FRAME_STYLE.radius / appState.zoom.value,
+          );
+          context.fill();
+          context.closePath();
+        } else {
+          context.fillRect(0, 0, element.width, element.height);
+        }
+
+        context.restore();
+      }
+
+      // Draw outline (only in editor mode, not during export)
       if (appState.frameRendering.enabled && appState.frameRendering.outline) {
         context.save();
         context.translate(
           element.x + appState.scrollX,
           element.y + appState.scrollY,
         );
-        context.fillStyle = "rgba(0, 0, 200, 0.04)";
 
         context.lineWidth = FRAME_STYLE.strokeWidth / appState.zoom.value;
         context.strokeStyle =

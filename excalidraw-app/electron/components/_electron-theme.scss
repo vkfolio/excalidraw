@@ -1,0 +1,64 @@
+// Self-contained theme for electron components that render OUTSIDE
+// the <Excalidraw> component scope. Uses html.dark for dark mode detection.
+// This replaces "@import packages/excalidraw/css/variables.module.scss"
+// which only defines vars inside .excalidraw scope.
+
+:root {
+  // ── Colors ──────────────────────────────────────────
+  --ed-bg: #f5f5f5;
+  --ed-bg-card: #ffffff;
+  --ed-bg-hover: #ebebeb;
+  --ed-bg-input: #ffffff;
+  --ed-border: #e0e0e0;
+  --ed-border-hover: #c0c0c0;
+
+  --ed-text: #1b1b1f;
+  --ed-text-secondary: #65656d;
+  --ed-text-disabled: #a0a0a8;
+
+  --ed-primary: #6965db;
+  --ed-primary-hover: #5b57c9;
+  --ed-primary-active: #4e4ab7;
+  --ed-primary-bg: rgba(105, 101, 219, 0.08);
+
+  --ed-danger: #e03131;
+  --ed-danger-bg: #fef2f2;
+
+  --ed-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --ed-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --ed-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  // ── Radii ───────────────────────────────────────────
+  --ed-radius-sm: 6px;
+  --ed-radius-md: 8px;
+  --ed-radius-lg: 12px;
+
+  // ── Font ────────────────────────────────────────────
+  --ed-font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+    "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+html.dark {
+  --ed-bg: #1e1e2e;
+  --ed-bg-card: #262637;
+  --ed-bg-hover: #32324a;
+  --ed-bg-input: #2a2a3d;
+  --ed-border: #3a3a52;
+  --ed-border-hover: #4e4e6a;
+
+  --ed-text: #e4e4ef;
+  --ed-text-secondary: #9494a8;
+  --ed-text-disabled: #5c5c72;
+
+  --ed-primary: #7c78f2;
+  --ed-primary-hover: #8e8af7;
+  --ed-primary-active: #6965db;
+  --ed-primary-bg: rgba(124, 120, 242, 0.12);
+
+  --ed-danger: #ff6b6b;
+  --ed-danger-bg: rgba(255, 107, 107, 0.08);
+
+  --ed-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --ed-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --ed-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
+}

@@ -1,0 +1,76 @@
+@import "./electron-theme";
+
+.FolderColorPicker {
+  position: fixed;
+  z-index: 1001;
+  background-color: var(--ed-bg-card);
+  border: 1px solid var(--ed-border);
+  border-radius: var(--ed-radius-lg);
+  box-shadow: var(--ed-shadow-lg);
+  padding: 0.75rem;
+  font-family: var(--ed-font);
+
+  &__title {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--ed-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.5rem 0;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.375rem;
+  }
+
+  &__swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.1s ease, border-color 0.1s ease;
+    padding: 0;
+    outline: none;
+
+    &:hover {
+      transform: scale(1.15);
+    }
+
+    &--active {
+      border-color: var(--ed-text);
+      box-shadow: 0 0 0 2px var(--ed-bg-card), 0 0 0 3px var(--ed-text);
+    }
+  }
+
+  &__reset {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.375rem 0;
+    font-size: 0.75rem;
+    color: var(--ed-text-secondary);
+    background: none;
+    border: none;
+    border-top: 1px solid var(--ed-border);
+    cursor: pointer;
+    font-family: var(--ed-font);
+
+    &:hover {
+      color: var(--ed-text);
+    }
+  }
+}
+
+.FolderColorPicker__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+}

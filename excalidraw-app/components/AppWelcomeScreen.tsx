@@ -5,6 +5,9 @@ import { WelcomeScreen } from "@excalidraw/excalidraw/index";
 import React from "react";
 
 import { isExcalidrawPlusSignedUser } from "../app_constants";
+import { isElectron } from "../electron/ElectronProvider";
+
+const _isElectron = isElectron();
 
 export const AppWelcomeScreen: React.FC<{
   onCollabDialogOpen: () => any;
@@ -13,7 +16,7 @@ export const AppWelcomeScreen: React.FC<{
   const { t } = useI18n();
   let headingContent;
 
-  if (isExcalidrawPlusSignedUser) {
+  if (!_isElectron && isExcalidrawPlusSignedUser) {
     headingContent = t("welcomeScreen.app.center_heading_plus")
       .split(/(Excalidraw\+)/)
       .map((bit, idx) => {
@@ -33,7 +36,9 @@ export const AppWelcomeScreen: React.FC<{
         return bit;
       });
   } else {
-    headingContent = t("welcomeScreen.app.center_heading");
+    headingContent = _isElectron
+      ? "Excalidraw Desktop"
+      : t("welcomeScreen.app.center_heading");
   }
 
   return (
@@ -51,12 +56,12 @@ export const AppWelcomeScreen: React.FC<{
         <WelcomeScreen.Center.Menu>
           <WelcomeScreen.Center.MenuItemLoadScene />
           <WelcomeScreen.Center.MenuItemHelp />
-          {props.isCollabEnabled && (
+          {!_isElectron && props.isCollabEnabled && (
             <WelcomeScreen.Center.MenuItemLiveCollaborationTrigger
               onSelect={() => props.onCollabDialogOpen()}
             />
           )}
-          {!isExcalidrawPlusSignedUser && (
+          {!_isElectron && !isExcalidrawPlusSignedUser && (
             <WelcomeScreen.Center.MenuItemLink
               href={`${
                 import.meta.env.VITE_APP_PLUS_LP

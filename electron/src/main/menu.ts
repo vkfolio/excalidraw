@@ -6,6 +6,12 @@ export function createApplicationMenu(mainWindow: BrowserWindow): void {
       label: "File",
       submenu: [
         {
+          label: "Home",
+          accelerator: "CmdOrCtrl+Shift+H",
+          click: () => mainWindow.webContents.send("menu:home"),
+        },
+        { type: "separator" },
+        {
           label: "New",
           accelerator: "CmdOrCtrl+N",
           click: () => mainWindow.webContents.send("menu:new"),
@@ -37,6 +43,10 @@ export function createApplicationMenu(mainWindow: BrowserWindow): void {
             {
               label: "Export as SVG...",
               click: () => mainWindow.webContents.send("menu:export", "svg"),
+            },
+            {
+              label: "Export as PDF...",
+              click: () => mainWindow.webContents.send("menu:exportPdf"),
             },
           ],
         },
@@ -77,6 +87,12 @@ export function createApplicationMenu(mainWindow: BrowserWindow): void {
           label: "Reset Zoom",
           accelerator: "CmdOrCtrl+0",
           click: () => mainWindow.webContents.send("menu:zoomReset"),
+        },
+        { type: "separator" },
+        {
+          label: "Presentation Mode",
+          accelerator: "F5",
+          click: () => mainWindow.webContents.send("menu:present"),
         },
         { type: "separator" },
         { role: "togglefullscreen" },

@@ -14,6 +14,11 @@ export const appJotaiStore = createStore();
 
 export { atom, Provider, useAtom, useAtomValue, useSetAtom };
 
+// Electron view routing
+export type ElectronView = "setup" | "home" | "editor" | "presentation";
+export const electronViewAtom = atom<ElectronView>("home");
+export const currentFilePathAtom = atom<string | null>(null);
+
 export const useAtomWithInitialValue = <
   T extends unknown,
   A extends PrimitiveAtom<T>,
