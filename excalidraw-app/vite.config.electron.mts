@@ -26,6 +26,13 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: [
         {
+          find: /^browser-fs-access$/,
+          replacement: path.resolve(
+            __dirname,
+            "electron/browser-fs-access-shim.ts",
+          ),
+        },
+        {
           find: /^@excalidraw\/common$/,
           replacement: path.resolve(
             __dirname,

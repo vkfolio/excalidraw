@@ -65,6 +65,120 @@ export function setupFileHandlers(): void {
     isModified = modified;
     updateWindowTitle();
   });
+
+  // Generic file open/save handlers used by the browser-fs-access shim
+  ipcMain.handle(
+    "fs:fileOpen",
+    async (
+      _event,
+      options: {
+        extensions?: string[];
+        description?: string;
+        multiple?: boolean;
+      },
+    ) => {
+      const filters: { name: string; extensions: string[] }[] = [];
+      if (options.extensions?.length) {
+        filters.push({
+          name: options.description || "Files",
+          extensions: options.extensions.map((ext) => ext.replace(/^\./, "")),
+        });
+      }
+      filters.push({ name: "All Files", extensions: ["*"] });
+
+      const result = await dialog.showOpenDialog({
+        title: options.description || "Open File",
+        filters,
+        properties: options.multiple
+          ? ["openFile", "multiSelections"]
+          : ["openFile"],
+      });
+
+      if (result.canceled || result.filePaths.length === 0) {
+        return null;
+      }
+
+      const files = await Promise.all(
+        result.filePaths.map(async (fp) => {
+          const buffer = await fs.readFile(fp);
+          const stat = await fs.stat(fp);
+          return {
+            data: buffer.buffer,
+            name: path.basename(fp),
+            lastModified: stat.mtimeMs,
+            path: fp,
+          };
+        }),
+      );
+
+      // Update current file if opening .excalidraw
+      if (
+        files.length === 1 &&
+        files[0].name.endsWith(".excalidraw")
+      ) {
+        currentFilePath = result.filePaths[0];
+        isModified = false;
+        const fileName = path.basename(result.filePaths[0], ".excalidraw");
+        setWindowTitle(fileName);
+        addToRecentFiles(result.filePaths[0]);
+      }
+
+      return options.multiple ? files : files[0];
+    },
+  );
+
+  ipcMain.handle(
+    "fs:fileSave",
+    async (
+      _event,
+      data: ArrayBuffer,
+      options: {
+        fileName?: string;
+        description?: string;
+        extensions?: string[];
+        existingHandlePath?: string;
+      },
+    ) => {
+      let filePath: string;
+
+      if (options.existingHandlePath) {
+        filePath = options.existingHandlePath;
+      } else {
+        const filters: { name: string; extensions: string[] }[] = [];
+        if (options.extensions?.length) {
+          filters.push({
+            name: options.description || "Files",
+            extensions: options.extensions.map((ext) => ext.replace(/^\./, "")),
+          });
+        }
+
+        const result = await dialog.showSaveDialog({
+          title: options.description || "Save File",
+          filters,
+          defaultPath: options.fileName,
+        });
+
+        if (result.canceled || !result.filePath) {
+          return null;
+        }
+
+        filePath = result.filePath;
+      }
+
+      await fs.writeFile(filePath, Buffer.from(data));
+
+      // Track as current file if saving .excalidraw
+      if (filePath.endsWith(".excalidraw")) {
+        currentFilePath = filePath;
+        isModified = false;
+        const fileName = path.basename(filePath, ".excalidraw");
+        setWindowTitle(fileName);
+        addToRecentFiles(filePath);
+      }
+
+      return { name: path.basename(filePath), kind: "file", path: filePath };
+    },
+  );
 }
 
 export async function handleFileOpen(filePath: string): Promise<void> {

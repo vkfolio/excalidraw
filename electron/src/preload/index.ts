@@ -33,6 +33,36 @@ const electronAPI = {
     },
   },
 
+  fs: {
+    fileOpen: (options: {
+      extensions?: string[];
+      description?: string;
+      multiple?: boolean;
+    }) =>
+      ipcRenderer.invoke("fs:fileOpen", options) as Promise<{
+        data: ArrayBuffer;
+        name: string;
+        lastModified: number;
+        path: string;
+      } | {
+        data: ArrayBuffer;
+        name: string;
+        lastModified: number;
+        path: string;
+      }[] | null>,
+    fileSave: (data: ArrayBuffer, options: {
+      fileName?: string;
+      description?: string;
+      extensions?: string[];
+      existingHandlePath?: string;
+    }) =>
+      ipcRenderer.invoke("fs:fileSave", data, options) as Promise<{
+        name: string;
+        kind: string;
+        path: string;
+      } | null>,
+  },
+
   menu: {
     onNew: (callback: () => void) => {
       ipcRenderer.on("menu:new", () => callback());
