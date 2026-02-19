@@ -1,6 +1,8 @@
 {
   "private": true,
+  "version": "1.0.0",
   "name": "excalidraw-monorepo",
+  "description": "Monorepo for Excalidraw projects",
   "packageManager": "yarn@1.22.22",
   "workspaces": [
     "excalidraw-app",
