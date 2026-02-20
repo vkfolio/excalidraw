@@ -68,6 +68,7 @@ export const useElectronFileOps = (
         appState: {
           viewBackgroundColor: appState.viewBackgroundColor,
           gridSize: appState.gridSize,
+          canvasGridStyle: appState.canvasGridStyle,
         },
         files,
       },

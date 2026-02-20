@@ -943,6 +943,12 @@ export const restoreAppState = (
     gridStep: getNormalizedGridStep(
       isFiniteNumber(appState.gridStep) ? appState.gridStep : DEFAULT_GRID_STEP,
     ),
+    canvasGridStyle:
+      appState.canvasGridStyle === "blank" ||
+      appState.canvasGridStyle === "lines" ||
+      appState.canvasGridStyle === "dots"
+        ? appState.canvasGridStyle
+        : "blank",
     editingFrame: null,
   };
 };

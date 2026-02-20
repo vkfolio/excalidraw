@@ -2112,7 +2112,7 @@ class App extends React.Component<AppProps, AppState> {
                           renderConfig={{
                             imageCache: this.imageCache,
                             isExporting: false,
-                            renderGrid: isGridModeEnabled(this),
+                            renderGrid: this.state.canvasGridStyle !== "blank",
                             canvasBackgroundColor:
                               this.state.viewBackgroundColor,
                             embedsValidationStatus: this.embedsValidationStatus,

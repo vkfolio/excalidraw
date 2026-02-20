@@ -26,6 +26,7 @@ import {
   isHandToolActive,
 } from "../appState";
 import { ColorPicker } from "../components/ColorPicker/ColorPicker";
+import { RadioGroup } from "../components/RadioGroup";
 import { ToolButton } from "../components/ToolButton";
 import { Tooltip } from "../components/Tooltip";
 import {
@@ -88,6 +89,46 @@ export const actionChangeViewBackgroundColor = register<Partial<AppState>>({
   },
 });
 
+export const actionChangeCanvasGridStyle = register<
+  AppState["canvasGridStyle"]
+>({
+  name: "changeCanvasGridStyle",
+  label: "labels.canvasGridStyle",
+  trackEvent: { category: "canvas" },
+  perform: (_, appState, value) => {
+    return {
+      appState: { ...appState, canvasGridStyle: value },
+      captureUpdate: CaptureUpdateAction.EVENTUALLY,
+    };
+  },
+  PanelComponent: ({ appState, updateData }) => {
+    return (
+      <RadioGroup
+        name="canvasGridStyle"
+        value={appState.canvasGridStyle}
+        onChange={(value: AppState["canvasGridStyle"]) => updateData(value)}
+        choices={[
+          {
+            value: "blank" as const,
+            label: "Blank",
+            ariaLabel: "Blank",
+          },
+          {
+            value: "lines" as const,
+            label: "Grid",
+            ariaLabel: "Grid",
+          },
+          {
+            value: "dots" as const,
+            label: "Dots",
+            ariaLabel: "Dots",
+          },
+        ]}
+      />
+    );
+  },
+});
+
 export const actionClearCanvas = register({
   name: "clearCanvas",
   label: "labels.clearCanvas",
@@ -117,6 +158,7 @@ export const actionClearCanvas = register({
         gridSize: appState.gridSize,
         gridStep: appState.gridStep,
         gridModeEnabled: appState.gridModeEnabled,
+        canvasGridStyle: appState.canvasGridStyle,
         stats: appState.stats,
         pasteDialog: appState.pasteDialog,
         activeTool:

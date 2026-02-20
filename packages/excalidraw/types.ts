@@ -158,6 +158,8 @@ export type ToolType =
 
 export type ElementOrToolType = ExcalidrawElementType | ToolType | "custom";
 
+export type CanvasGridStyle = "blank" | "lines" | "dots";
+
 export type ActiveTool =
   | {
       type: ToolType;
@@ -201,6 +203,7 @@ export type StaticCanvasAppState = Readonly<
     selectedElementsAreBeingDragged: AppState["selectedElementsAreBeingDragged"];
     gridSize: AppState["gridSize"];
     gridStep: AppState["gridStep"];
+    canvasGridStyle: AppState["canvasGridStyle"];
     frameRendering: AppState["frameRendering"];
     currentHoveredFontFamily: AppState["currentHoveredFontFamily"];
     hoveredElementIds: AppState["hoveredElementIds"];
@@ -398,6 +401,8 @@ export interface AppState {
   gridSize: number;
   gridStep: number;
   gridModeEnabled: boolean;
+  /** Visual background pattern style, independent of snap behavior */
+  canvasGridStyle: CanvasGridStyle;
   viewModeEnabled: boolean;
 
   /** top-most selected groups (i.e. does not include nested groups) */

@@ -53,6 +53,56 @@ const GridLineColor = {
   },
 } as const;
 
+const strokeDots = (
+  context: CanvasRenderingContext2D,
+  gridSize: number,
+  gridStep: number,
+  scrollX: number,
+  scrollY: number,
+  zoom: Zoom,
+  theme: StaticCanvasRenderConfig["theme"],
+  width: number,
+  height: number,
+) => {
+  const offsetX = (scrollX % gridSize) - gridSize;
+  const offsetY = (scrollY % gridSize) - gridSize;
+  const actualGridSize = gridSize * zoom.value;
+
+  context.save();
+
+  for (let x = offsetX; x < offsetX + width + gridSize * 2; x += gridSize) {
+    const isBoldX =
+      gridStep > 1 && Math.round(x - scrollX) % (gridStep * gridSize) === 0;
+    if (!isBoldX && actualGridSize < 10) {
+      continue;
+    }
+
+    for (let y = offsetY; y < offsetY + height + gridSize * 2; y += gridSize) {
+      const isBoldY =
+        gridStep > 1 &&
+        Math.round(y - scrollY) % (gridStep * gridSize) === 0;
+      if (!isBoldY && actualGridSize < 10) {
+        continue;
+      }
+
+      const isBold = isBoldX && isBoldY;
+      const radius = Math.min(
+        isBold ? 2 / zoom.value : 1 / zoom.value,
+        isBold ? 2 : 1,
+      );
+
+      context.beginPath();
+      context.fillStyle = isBold
+        ? GridLineColor[theme].bold
+        : GridLineColor[theme].regular;
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+
+  context.restore();
+};
+
 const strokeGrid = (
   context: CanvasRenderingContext2D,
   /** grid cell pixel size */
@@ -65,7 +115,23 @@ const strokeGrid = (
   theme: StaticCanvasRenderConfig["theme"],
   width: number,
   height: number,
+  style: "lines" | "dots",
 ) => {
+  if (style === "dots") {
+    strokeDots(
+      context,
+      gridSize,
+      gridStep,
+      scrollX,
+      scrollY,
+      zoom,
+      theme,
+      width,
+      height,
+    );
+    return;
+  }
+
   const offsetX = (scrollX % gridSize) - gridSize;
   const offsetY = (scrollY % gridSize) - gridSize;
 
@@ -261,7 +327,7 @@ const _renderStaticScene = ({
   context.scale(appState.zoom.value, appState.zoom.value);
 
   // Grid
-  if (renderGrid) {
+  if (appState.canvasGridStyle && appState.canvasGridStyle !== "blank") {
     strokeGrid(
       context,
       appState.gridSize,
@@ -272,6 +338,7 @@ const _renderStaticScene = ({
       renderConfig.theme,
       normalizedWidth / appState.zoom.value,
       normalizedHeight / appState.zoom.value,
+      appState.canvasGridStyle,
     );
   }
 

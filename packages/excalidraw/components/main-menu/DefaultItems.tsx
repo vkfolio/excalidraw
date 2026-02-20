@@ -316,6 +316,18 @@ export const ChangeCanvasBackground = () => {
       <div style={{ padding: "0 0.625rem" }}>
         {actionManager.renderAction("changeViewBackgroundColor")}
       </div>
+      <div
+        style={{
+          fontSize: ".75rem",
+          marginTop: ".5rem",
+          marginBottom: ".5rem",
+        }}
+      >
+        {t("labels.canvasGridStyle")}
+      </div>
+      <div style={{ padding: "0 0.625rem" }}>
+        {actionManager.renderAction("changeCanvasGridStyle")}
+      </div>
     </div>
   );
 };

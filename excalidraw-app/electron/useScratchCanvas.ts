@@ -49,6 +49,7 @@ export const useScratchCanvas = (
         appState: {
           viewBackgroundColor: appState.viewBackgroundColor,
           gridSize: appState.gridSize,
+          canvasGridStyle: appState.canvasGridStyle,
         },
         files,
       },
